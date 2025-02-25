@@ -232,4 +232,16 @@ def get_results():
             })
         return results
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve results: {e}") 
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve results: {e}")
+
+@app.delete("/api/flush-database")
+def flush_database():
+    try:
+        conn = sqlite3.connect("results.db")
+        c = conn.cursor()
+        c.execute("DELETE FROM votes")
+        conn.commit()
+        conn.close()
+        return {"message": "Database flushed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to flush database: {e}") 

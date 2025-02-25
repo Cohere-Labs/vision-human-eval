@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface VoteResult {
   id: number;
@@ -14,6 +14,7 @@ interface VoteResult {
 const Dashboard: React.FC = () => {
   const [results, setResults] = useState<VoteResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [flushStatus, setFlushStatus] = useState<string>('');
 
   const fetchResults = async () => {
     try {
@@ -27,6 +28,50 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const flushDatabase = async () => {
+    if (window.confirm('Are you sure you want to flush the database? This action cannot be undone.')) {
+      try {
+        setFlushStatus('Flushing database...');
+        const response = await fetch('/api/flush-database', {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          setFlushStatus('Database flushed successfully!');
+          fetchResults(); // Refresh the results after flushing
+        } else {
+          const errorData = await response.json();
+          setFlushStatus(`Error: ${errorData.detail || 'Failed to flush database'}`);
+        }
+      } catch (error) {
+        console.error('Error flushing database:', error);
+        setFlushStatus('Error: Failed to flush database');
+      }
+      
+      // Clear status message after 3 seconds
+      setTimeout(() => {
+        setFlushStatus('');
+      }, 3000);
+    }
+  };
+
+  // Handle keyboard shortcut for database flush (Ctrl+Alt+F)
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.ctrlKey && event.altKey && event.key === 'f') {
+      flushDatabase();
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add event listener for keyboard shortcut
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
   useEffect(() => {
     fetchResults();
     const interval = setInterval(fetchResults, 5000); // refresh every 5 seconds
@@ -35,7 +80,15 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">Vote Results Dashboard</h1>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-center">Vote Results Dashboard</h1>
+        {flushStatus && (
+          <div className="mt-2 text-center text-sm font-medium">
+            {flushStatus}
+          </div>
+        )}
+      </div>
+      
       {loading ? (
         <div className="text-center">Loading...</div>
       ) : (

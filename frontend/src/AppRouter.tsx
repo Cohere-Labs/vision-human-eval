@@ -9,7 +9,6 @@ const AppRouter: React.FC = () => {
       <div>
         <nav className="p-4 bg-gray-200 flex justify-between">
           <Link to="/" className="mr-4 font-bold">Chatbot Arena</Link>
-          <Link to="/dashboard" className="font-bold">Dashboard</Link>
         </nav>
         <Routes>
           <Route path="/" element={<App />} />
