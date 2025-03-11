@@ -170,11 +170,19 @@ class VoteRequest(BaseModel):
 @app.post("/api/vote")
 def submit_vote(vote: VoteRequest):
     try:
+        # Convert model1/model2 vote to A/B format
+        vote_value = vote.winner
+        if vote_value == "model1":
+            vote_value = "A"
+        elif vote_value == "model2":
+            vote_value = "B"
+        # Keep 'tie' and 'both_bad' as they are
+            
         conn = sqlite3.connect("results.db")
         c = conn.cursor()
         c.execute(
             "INSERT INTO votes (prompt_id, timestamp, language, prompt, generation_a, generation_b, vote) VALUES (?,?,?,?,?,?,?)",
-            (vote.prompt_id, vote.timestamp, vote.language, vote.prompt_text, vote.model1, vote.model2, vote.winner)
+            (vote.prompt_id, vote.timestamp, vote.language, vote.prompt_text, vote.model1, vote.model2, vote_value)
         )
         conn.commit()
         conn.close()
@@ -206,6 +214,9 @@ def get_languages():
     try:
         files = os.listdir(JSONL_DIR)
         languages = [file.split('.')[0] for file in files if file.endswith('.jsonl')]
+        # Remove 'aya23' from the list of languages if it exists
+        if 'aya23' in languages:
+            languages.remove('aya23')
         return {"languages": languages}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading languages: {e}")

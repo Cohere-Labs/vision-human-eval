@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface VoteResult {
   id: number;
@@ -78,6 +80,17 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Markdown component with styling
+  const MarkdownCell = ({ content }: { content: string }) => (
+    <div className="p-2 text-left max-h-60 overflow-y-auto prose prose-sm max-w-none">
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="mb-4">
@@ -108,15 +121,30 @@ const Dashboard: React.FC = () => {
             </thead>
             <tbody>
               {results.map((result) => (
-                <tr key={result.id} className="text-center">
-                  <td className="py-2 px-4 border-b">{result.id}</td>
-                  <td className="py-2 px-4 border-b">{result.prompt_id}</td>
-                  <td className="py-2 px-4 border-b">{result.timestamp}</td>
-                  <td className="py-2 px-4 border-b">{result.language}</td>
-                  <td className="py-2 px-4 border-b">{result.prompt}</td>
-                  <td className="py-2 px-4 border-b">{result.generation_a}</td>
-                  <td className="py-2 px-4 border-b">{result.generation_b}</td>
-                  <td className="py-2 px-4 border-b">{result.vote}</td>
+                <tr key={result.id}>
+                  <td className="py-2 px-4 border-b text-center">{result.id}</td>
+                  <td className="py-2 px-4 border-b text-center">{result.prompt_id}</td>
+                  <td className="py-2 px-4 border-b text-center">{result.timestamp}</td>
+                  <td className="py-2 px-4 border-b text-center">{result.language}</td>
+                  <td className="py-2 px-4 border-b">
+                    <MarkdownCell content={result.prompt} />
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    <MarkdownCell content={result.generation_a} />
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    <MarkdownCell content={result.generation_b} />
+                  </td>
+                  <td className="py-2 px-4 border-b text-center">
+                    <span className={`px-2 py-1 rounded ${
+                      result.vote === 'A' ? 'bg-blue-100 text-blue-800' : 
+                      result.vote === 'B' ? 'bg-green-100 text-green-800' : 
+                      result.vote === 'tie' ? 'bg-yellow-100 text-yellow-800' : 
+                      result.vote === 'both_bad' ? 'bg-red-100 text-red-800' : ''
+                    }`}>
+                      {result.vote}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
